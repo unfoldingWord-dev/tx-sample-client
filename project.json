@@ -1,0 +1,9 @@
+
+{
+  "name": "tx-sample-client",
+  "description": "Sample client for webhooks",
+  "memory": 128,
+  "timeout": 5,
+  "role": "arn:aws:iam::581647696645:role/tx_lambda_function",
+  "environment": {}
+}
