@@ -32,17 +32,7 @@ def handle(event, context):
     print("data:")
     print(data)
 
-    identifier = data['identifier']
-    parts = identifier.split(':::')
-
-    if len(parts) < 3:
-        return
-
-    repo_owner = parts[0]
-    repo_name = parts[1]
-    commit_id = parts[2]
-
-    s3_project_key = 'u/{0}/{1}/{2}'.format(repo_owner, repo_name, commit_id[:10])
+    s3_project_key = 'u/{0}'.format(data['identifier'])  # The identifier is how to know which username/repo/commit this callback goes to
 
     s3_resource = boto3.resource('s3')
     bucket = s3_resource.Bucket(cdn_bucket)

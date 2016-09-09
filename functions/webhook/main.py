@@ -106,8 +106,9 @@ def handle(event, context):
     # Send job request to tx-manager
     source_url = 'https://s3-us-west-2.amazonaws.com/'+pre_convert_bucket+'/'+zip_filename # we use us-west-2 for our s3 buckets
     tx_manager_job_url = api_url+'/tx/job'
+    identifier = "{0}/{1}/{2}".format(repo_owner, repo_name, commit_id[:10])  # The way to know which repo/commit goes to this job request
     payload = {
-        "identifier": "{0}:::{1}:::{2}".format(repo_owner, repo_name, commit_id),
+        "identifier": identifier,
         "user_token": gogs_user_token,
         "username": pusher_username,
         "resource_type": "obs",
@@ -152,7 +153,7 @@ def handle(event, context):
         build_log_json['message'] = json_data['errorMessage']
 
     # Make a build_log.json file with this repo and commit data for later processing, upload to S3
-    s3_project_key = 'u/{0}/{1}/{2}'.format(repo_owner, repo_name, commit_id[:10])
+    s3_project_key = 'u/{0}'.format(identifier)
     s3_resource = boto3.resource('s3')
     bucket = s3_resource.Bucket(cdn_bucket)
     for obj in bucket.objects.filter(Prefix=s3_project_key):
