@@ -37,11 +37,11 @@ def handle(event, context):
     s3_resource = boto3.resource('s3')
     bucket = s3_resource.Bucket(cdn_bucket)
 
-    # Unzip ZIP file into the cdn_bucket
+    # Download the ZIP file of the converted files
     converted_zip_url = data['output']
     converted_zip_file = os.path.join(tempfile.gettempdir(), converted_zip_url.rpartition('/')[2])
     try:
-        print('Downloading converted file from {0}...'.format(converted_zip_url))
+        print('Downloading converted zip file from {0}...'.format(converted_zip_url))
         if not os.path.isfile(converted_zip_file):
             download_file(converted_zip_url, converted_zip_file)
     finally:
@@ -99,4 +99,3 @@ def handle(event, context):
     print(build_log_json)
 
     # Todo: Raw converted files are now in the cdn bucket. Trigger door43.org page rendering here
-
