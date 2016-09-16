@@ -175,17 +175,28 @@ def handle(event, context):
         build_log_json['status'] = 'failed'
         build_log_json['message'] = json_data['errorMessage']
 
-    # Make a build_log.json file with this repo and commit data for later processing, upload to S3
+    # Upload files to S3:
+
+    # S3 location vars
     s3_project_key = 'u/{0}'.format(identifier)
     s3_resource = boto3.resource('s3')
     bucket = s3_resource.Bucket(cdn_bucket)
+
+    # Remove everything in the bucket with the s3_project_key prefix so old files are removed, if any
     for obj in bucket.objects.filter(Prefix=s3_project_key):
         s3_resource.Object(bucket.name, obj.key).delete()
+
+    # Make a build_log.json file with this repo and commit data for later processing, upload to S3
     build_log_file = os.path.join(tempfile.gettempdir(), 'build_log_request.json')
     write_file(build_log_file, build_log_json)
     bucket.upload_file(build_log_file, s3_project_key+'/build_log.json', ExtraArgs={'ContentType': 'application/json'})
     print('Uploaded the following content from {0} to {1}/build_log.json'.format(build_log_file, s3_project_key))
     print(build_log_json)
+
+    # Upload the manifest.json file to the cdn_bucket if it exists
+    if os.path.isfile(manifest_filepath):
+        bucket.upload_file(manifest_filepath, s3_project_key+'/manifest.json', ExtraArgs={'ContentType': 'application/json'})
+        print('Uploaded the manifest.json file to {1}/manifest.json'.format(build_log_file, s3_project_key))
 
     # If there was an error, in order to trigger a 400 error in the API Gateway, we need to raise an
     # exception with the returned 'errorMessage' because the API Gateway needs to see 'Bad Request:' in the string
