@@ -23,7 +23,13 @@ from general_tools.url_utils import download_file
 
 
 def handle(event, context):
+    # Getting data from payload which is the JSON that was sent from tx-manager
+    if 'data' not in event:
+        raise Exception('"data" not in payload')
     data = event['data']
+
+    if 'vars' in event and isinstance(event['vars'], dict):
+        data.update(event['vars'])
 
     commit_id = data['after']
     commit = None
@@ -37,10 +43,10 @@ def handle(event, context):
     if 'https://git.door43.org/' not in commit_url and 'http://test.door43.org:3000/' not in commit_url:
         raise Exception('Currently only git.door43.org repositories are supported.')
 
-    pre_convert_bucket = event['pre_convert_bucket']
-    cdn_bucket = event['cdn_bucket']
-    gogs_user_token = event['gogs_user_token']
-    api_url = event['api_url']
+    pre_convert_bucket = data['pre_convert_bucket']
+    cdn_bucket = data['cdn_bucket']
+    gogs_user_token = data['gogs_user_token']
+    api_url = data['api_url']
     repo_name = data['repository']['name']
     repo_owner = data['repository']['owner']['username']
     compare_url = data['compare_url']
@@ -76,28 +82,29 @@ def handle(event, context):
         print('finished.')
 
     # 2) Massage the content to just be a directory of MD files in alphabetical order as they should be compiled together in the converter
-    manifest_filepath = os.path.join(repo_dir, 'manifest.json')
+    manifest_filepath = os.path.join(repo_dir, repo_name, 'manifest.json')
     # Get info from manifest.json if there is one
     if os.path.isfile(manifest_filepath):
         with open(manifest_filepath) as f:
             manifest = json.load(f)
-            input_format = manifest['format']
-            # Handle USFM files
-            if input_format == 'usfm':
-                book = manifest['project']['id']
-                title = manifest['project']['name']
-                resource = manifest['resource']['id']
-                resource = manifest['resource']['name']
-                title_filepath = os.path.join(repo_dir, '00', 'title')
-                if os.path.isfile(title_filepath):
-                    with open(title_filepath) as title_file:
-                        title = title_file.read()
+            if 'format' in manifest:
+                input_format = manifest['format']
+                # Handle USFM files
+                if input_format == 'usfm':
+                    book = manifest['project']['id']
+                    title = manifest['project']['name']
+                    resource = manifest['resource']['id']
+                    resource = manifest['resource']['name']
+                    title_filepath = os.path.join(repo_dir, '00', 'title')
+                    if os.path.isfile(title_filepath):
+                        with open(title_filepath) as title_file:
+                            title = title_file.read()
 
-                usfm_filepath = os.path.join(tempfile.gettempdir(), '{0}-{1}.usfm'.format(resource, book))
-                # Get title from file if there is one
-                with open(usfm_filepath, 'w') as usfm_file:
-                    pass
-                    # Todo: Write more for USFMS to make one big USFM file
+                    usfm_filepath = os.path.join(tempfile.gettempdir(), '{0}-{1}.usfm'.format(resource, book))
+                    # Get title from file if there is one
+                    with open(usfm_filepath, 'w') as usfm_file:
+                        pass
+                        # Todo: Write more for USFMS to make one big USFM file
 
     content_dir = os.path.join(repo_dir, repo_name, 'content')
     md_files = glob(os.path.join(content_dir, '*.md'))
@@ -138,7 +145,7 @@ def handle(event, context):
         "input_format": "md",
         "output_format": "html",
         "source": source_url,
-        "callback": api_url+'/sampleclient/callback'
+        "callback": api_url+'/tx/client/callback'
     }
     headers = {"content-type": "application/json"}
 
@@ -196,7 +203,7 @@ def handle(event, context):
     # Upload the manifest.json file to the cdn_bucket if it exists
     if os.path.isfile(manifest_filepath):
         bucket.upload_file(manifest_filepath, s3_project_key+'/manifest.json', ExtraArgs={'ContentType': 'application/json'})
-        print('Uploaded the manifest.json file to {1}/manifest.json'.format(build_log_file, s3_project_key))
+        print('Uploaded the manifest.json file to {0}/manifest.json'.format(s3_project_key))
 
     # If there was an error, in order to trigger a 400 error in the API Gateway, we need to raise an
     # exception with the returned 'errorMessage' because the API Gateway needs to see 'Bad Request:' in the string
