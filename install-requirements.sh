@@ -2,5 +2,5 @@
 
 for file in `ls functions/*/requirements.txt`
 do
-  pip install -r $file -t `dirname $file` 
+  pip install --upgrade -r $file -t `dirname $file` 
 done

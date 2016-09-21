@@ -71,7 +71,7 @@ def handle(event, context):
             if not mime_type:
                 mime_type = "text/html"
             print('Uploading {0} to {1}, mime_type: {2}'.format(f, key, mime_type))
-            bucket.upload_file(path, key, ExtraArgs={'ContentType': mime_type})
+            bucket.upload_file(path, key, ExtraArgs={'ContentType': mime_type, 'CacheControl': str('public, max-age=5')})
 
     # Now download the existing build_log.json file, update it and upload it back to S3
     s3_file = s3_resource.Object(cdn_bucket, s3_commit_key+'/build_log.json')
@@ -99,26 +99,27 @@ def handle(event, context):
 
     build_log_file = os.path.join(tempfile.gettempdir(), 'build_log_finished.json')
     write_file(build_log_file, build_log_json)
-    bucket.upload_file(build_log_file, s3_commit_key+'/build_log.json', ExtraArgs={'ContentType': 'application/json'})
+    bucket.upload_file(build_log_file, s3_commit_key+'/build_log.json', ExtraArgs={'ContentType': 'application/json', 'CacheControl': str('public, max-age=5')})
     print('Uploaded the following content from {0} to {1}/build_log.json'.format(build_log_file, s3_commit_key))
     print(build_log_json)
 
     # Now we update, or generate, the commits.json for the repo which has all the commits
     s3_repo_key = 'u/{0}/{1}'.format(user, repo)
-    commits_url = '{0}/{1}/commits.json'.format(data['cdn_url'], s3_repo_key)
+    project_url = '{0}/{1}/project.json'.format(data['cdn_url'], s3_repo_key)
 
     # Download the project.json file for this repo (create it if doesn't exist) and update it
     project = {}
+    print("Getting {0}...".format(project_url))
     try:
-        project = json.loads(get_url(commits_url))
-    except Exception:
-        pass
+        project = json.loads(get_url(project_url))
+    except Exception as e:
+        print("FAILED: {0}".format(e.message))
     finally:
         print('finished.')
 
     project['user'] = user
     project['repo'] = repo
-    project['gogs_url'] = 'https://git.door43.org/{0}/{1}'.format(user, repo)
+    project['repo_url'] = 'https://git.door43.org/{0}/{1}'.format(user, repo)
     
     item = {
         'id': commit,
@@ -135,12 +136,16 @@ def handle(event, context):
 
     if 'commits' not in project:
         project['commits'] = []
+    print("BEFORE APPEND:")
+    print(project['commits'])
     project['commits'].append(item)
-    
+    print("AFTER APPEND:")
+    print(project['commits'])
+
     project_file = os.path.join(tempfile.gettempdir(), 'project.json')
     write_file(project_file, project)
     bucket.upload_file(project_file, s3_repo_key + '/project.json',
-                       ExtraArgs={'ContentType': 'application/json'})
+                       ExtraArgs={'ContentType': 'application/json', 'CacheControl': str('public, max-age=5')})
     print('Uploaded the following content from {0} to {1}/project.json'.format(project_file, s3_repo_key))
     print(project)
 
@@ -153,3 +158,4 @@ def handle(event, context):
     print(data)
     response = requests.post(url, json=data, headers=headers)
     print('finished.')
+
