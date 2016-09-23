@@ -196,13 +196,13 @@ def handle(event, context):
     # Make a build_log.json file with this repo and commit data for later processing, upload to S3
     build_log_file = os.path.join(tempfile.gettempdir(), 'build_log_request.json')
     write_file(build_log_file, build_log_json)
-    bucket.upload_file(build_log_file, s3_project_key+'/build_log.json', ExtraArgs={'ContentType': 'application/json', 'CacheControl': str('public, max-age=5')})
+    bucket.upload_file(build_log_file, s3_project_key+'/build_log.json', ExtraArgs={'ContentType': 'application/json', 'CacheControl': 'max-age=0'})
     print('Uploaded the following content from {0} to {1}/build_log.json'.format(build_log_file, s3_project_key))
     print(build_log_json)
 
     # Upload the manifest.json file to the cdn_bucket if it exists
     if os.path.isfile(manifest_filepath):
-        bucket.upload_file(manifest_filepath, s3_project_key+'/manifest.json', ExtraArgs={'ContentType': 'application/json', 'CacheControl': str('public, max-age=5')})
+        bucket.upload_file(manifest_filepath, s3_project_key+'/manifest.json', ExtraArgs={'ContentType': 'application/json', 'CacheControl': 'max-age=0'})
         print('Uploaded the manifest.json file to {0}/manifest.json'.format(s3_project_key))
 
     # If there was an error, in order to trigger a 400 error in the API Gateway, we need to raise an

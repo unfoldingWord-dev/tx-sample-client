@@ -71,7 +71,7 @@ def handle(event, context):
             if not mime_type:
                 mime_type = "text/html"
             print('Uploading {0} to {1}, mime_type: {2}'.format(f, key, mime_type))
-            bucket.upload_file(path, key, ExtraArgs={'ContentType': mime_type, 'CacheControl': str('public, max-age=5')})
+            bucket.upload_file(path, key, ExtraArgs={'ContentType': mime_type, 'CacheControl': 'max-age=0'})
 
     # Now download the existing build_log.json file, update it and upload it back to S3
     s3_file = s3_resource.Object(cdn_bucket, s3_commit_key+'/build_log.json')
@@ -99,7 +99,7 @@ def handle(event, context):
 
     build_log_file = os.path.join(tempfile.gettempdir(), 'build_log_finished.json')
     write_file(build_log_file, build_log_json)
-    bucket.upload_file(build_log_file, s3_commit_key+'/build_log.json', ExtraArgs={'ContentType': 'application/json', 'CacheControl': str('public, max-age=5')})
+    bucket.upload_file(build_log_file, s3_commit_key+'/build_log.json', ExtraArgs={'ContentType': 'application/json', 'CacheControl': 'max-age=0'})
     print('Uploaded the following content from {0} to {1}/build_log.json'.format(build_log_file, s3_commit_key))
     print(build_log_json)
 
@@ -145,7 +145,7 @@ def handle(event, context):
     project_file = os.path.join(tempfile.gettempdir(), 'project.json')
     write_file(project_file, project)
     bucket.upload_file(project_file, s3_repo_key + '/project.json',
-                       ExtraArgs={'ContentType': 'application/json', 'CacheControl': str('public, max-age=5')})
+                       ExtraArgs={'ContentType': 'application/json', 'CacheControl': 'max-age=0'})
     print('Uploaded the following content from {0} to {1}/project.json'.format(project_file, s3_repo_key))
     print(project)
 
