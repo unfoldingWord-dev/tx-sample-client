@@ -140,7 +140,6 @@ def handle(event, context):
     payload = {
         "identifier": identifier,
         "user_token": gogs_user_token,
-        "username": pusher_username,
         "resource_type": "obs",
         "input_format": "md",
         "output_format": "html",
