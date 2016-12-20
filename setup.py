@@ -2,31 +2,21 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-here = path.abspath(path.dirname(__file__))
-
-
-with open(path.join(here, "README.rst"), "r") as f:
-    long_description = f.read()
-
 setup(
     name="tx-sample-client",
     version="1.0.0",
-    description="USFM-to-HTML conversion",
-    long_description=long_description,
+    description="Sample Client",
+    long_description="Sample Client",
     url="https://github.com/unfoldingWord-dev/tx-sample-client",
     author="unfoldingWord",
-    author_email="ethantkoenig@gmail.com",
+    author_email="info@door43.org",
     license="MIT",
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 2.7",
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5'
     ],
-    keywords=["usfm", "html"],
+    keywords=["client"],
     packages=find_packages(),
-    install_requires=["future"],
+    install_requires=["future", "requests"],
     test_suite="tests"
 )
